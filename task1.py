@@ -1,9 +1,10 @@
 import time
 
+from Task import Task
 from PinDefinitions import button_led_pin, red_led_pin
 
-def run():
-    while True:
+class Task1(Task):
+    def run_iteration(self):
         isButtonPressed = button_led_pin.value()
 
         if isButtonPressed:

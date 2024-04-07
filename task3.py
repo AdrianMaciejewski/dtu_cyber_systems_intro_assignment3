@@ -1,5 +1,6 @@
 from machine import I2C
 
+from Task import Task
 from PinDefinitions import green_led_pin, orange_led_pin, red_led_pin, sda_pin, scl_pin
 
 
@@ -10,35 +11,33 @@ def convert_to_celcius(data):
         temp -= 256
     return temp
 
+class Task3(Task):
+    def __init__(self):
+        self.i2c = I2C(scl=scl_pin,sda=sda_pin)
+        self.GREEN_ORANGE_THRESHOLD = 28
+        self.ORANGE_RED_THRESHOLD = 31
 
-def run():
-    i2c = I2C(scl=scl_pin,sda=sda_pin)
-    
-    print(i2c.scan())
-
-    data = bytearray(2)
-    while True:
-        i2c.readfrom_mem_into(24,5,data)
+    def run_iteration(self):
+        data = bytearray(2)
+        self.i2c.readfrom_mem_into(24,5,data)
         temp = convert_to_celcius(data)
-        
-        green_led_pin.value(0)
-        orange_led_pin.value(0)
-        red_led_pin.value(0)
 
-        green_orange_threshold = 28
-        orange_red_threshold = 31
-        
-        if temp < green_orange_threshold:
+        if temp < self.GREEN_ORANGE_THRESHOLD:
             green_led_pin.value(1)
             orange_led_pin.value(0)
             red_led_pin.value(0)
-        elif temp >= green_orange_threshold and temp <= orange_red_threshold:
+        elif temp >= self.GREEN_ORANGE_THRESHOLD and temp <= self.ORANGE_RED_THRESHOLD:
             green_led_pin.value(0)
             orange_led_pin.value(1)
             red_led_pin.value(0)
-        elif temp > orange_red_threshold:
+        elif temp > self.ORANGE_RED_THRESHOLD:
             green_led_pin.value(0)
             orange_led_pin.value(0)
             red_led_pin.value(1)
-
-        print(temp)
+        
+        print(f"Task3; Temperature: {temp}")
+    
+    def end_task(self):
+        green_led_pin.value(0)
+        orange_led_pin.value(0)
+        red_led_pin.value(0)

@@ -23,3 +23,6 @@ scl_pin = Pin(SCL, Pin.OUT)
 
 A5=4
 potentiometer_pin = Pin(A5, Pin.IN)
+
+A4=36
+button_change_task = Pin(A4, Pin.IN)

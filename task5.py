@@ -1,27 +1,35 @@
 from machine import ADC, PWM
 
+from Task import Task
 from PinDefinitions import potentiometer_pin, rgb_led_red_pin, rgb_led_green_pin, rgb_led_blue_pin
 
 
-def run():
-    MIN_VOLTAGE = 63*1000
-    MAX_VOLTAGE = 1048*1000
+class Task5(Task):
+    def __init__(self):
+        self.MIN_VOLTAGE = 63*1000
+        self.MAX_VOLTAGE = 1048*1000
+        self.MAX_DUTY = 2**10-1
 
-    MAX_DUTY = 2**10-1
+        self.red_pwm = PWM(rgb_led_red_pin, duty=0)
+        self.green_pwm = PWM(rgb_led_green_pin, duty=0)
+        self.blue_pwm = PWM(rgb_led_blue_pin, duty=0)
 
-    red_pwm = PWM(rgb_led_red_pin, duty=0)
-    green_pwm = PWM(rgb_led_green_pin, duty=0)
-    blue_pwm = PWM(rgb_led_blue_pin, duty=0)
+        self.adc = ADC(potentiometer_pin)
 
-    while True:
-        adc = ADC(potentiometer_pin)
-        voltage = adc.read_uv()
-        voltage_load = (voltage - MIN_VOLTAGE) / (MAX_VOLTAGE - MIN_VOLTAGE) # value from 0 to 1
+    def run_iteration(self):
+        voltage = self.adc.read_uv()
+        voltage_load = (voltage - self.MIN_VOLTAGE) / (self.MAX_VOLTAGE - self.MIN_VOLTAGE) # value from 0 to 1
         voltage_load = min(abs(voltage_load),1) # just make sure that it is within the range
 
-        duty=int(MAX_DUTY*voltage_load)
-        red_pwm.duty(duty)
-        green_pwm.duty(duty)
-        blue_pwm.duty(duty)
+        duty=int(self.MAX_DUTY*voltage_load)
+        self.red_pwm.duty(duty)
+        self.green_pwm.duty(duty)
+        self.blue_pwm.duty(duty)
 
-        print(voltage_load)
+        print(f"Task5; voltage load: {voltage_load}")
+
+    def end_task(self):
+        duty=0
+        self.red_pwm.duty(duty)
+        self.green_pwm.duty(duty)
+        self.blue_pwm.duty(duty)

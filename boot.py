@@ -1,8 +1,8 @@
-from task1 import Task1 
-from task2 import Task2
-from task3 import Task3
-from task4 import Task4
-from task5 import Task5
+from Task1 import Task1 
+from Task2 import Task2
+from Task3 import Task3
+from Task4 import Task4
+from Task5 import Task5
 
 from PinDefinitions import button_change_task
 

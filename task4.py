@@ -1,7 +1,7 @@
 from machine import I2C, PWM
 
 from PinDefinitions import rgb_led_red_pin, rgb_led_green_pin, rgb_led_blue_pin, sda_pin, scl_pin
-from task3 import Task3, convert_to_celcius
+from Task3 import Task3, convert_to_celcius
 
 
 class Task4(Task3):

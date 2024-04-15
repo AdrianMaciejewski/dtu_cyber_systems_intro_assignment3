@@ -8,8 +8,10 @@ from Task5 import Task5
 
 from PinDefinitions import button_change_task
 
-def run():
-    tasks = [Task1(), Task2(), Task3(), Task4(), Task5()]
+from server import Server
+
+async def run_board():
+    tasks = [Task1(), Task2(), Task3(), Task4()]#, Task5()
     running_task_index = 0
     print("Starting with task 1")
 
@@ -25,9 +27,28 @@ def run():
         tasks[running_task_index].run_iteration()
 
         was_button_pressed = isButtonPressed
+        await uasyncio.sleep_ms(1)
+
+async def run_server():
+    await Server().start()
+
+
+async def task1():
+    while True:
+        print("Task 1 running")
+        await uasyncio.sleep(10)
+
+async def task2():
+    while True:
+        print("Task 2 running")
+        await uasyncio.sleep(2)
+
+async def run():
+    loop = uasyncio.get_event_loop()
+    loop.create_task(run_board())
+    loop.create_task(run_server())
+    loop.run_forever()
 
 
 if __name__ == "__main__":
-    from server import run_server
-    uasyncio.run(run_server())
-    #run()
+    uasyncio.run(run())

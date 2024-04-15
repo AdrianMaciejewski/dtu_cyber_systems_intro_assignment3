@@ -1,3 +1,5 @@
+import uasyncio
+
 from Task1 import Task1 
 from Task2 import Task2
 from Task3 import Task3
@@ -25,6 +27,7 @@ def run():
         was_button_pressed = isButtonPressed
 
 
-
 if __name__ == "__main__":
-    run()
+    from server import run_server
+    uasyncio.run(run_server())
+    #run()

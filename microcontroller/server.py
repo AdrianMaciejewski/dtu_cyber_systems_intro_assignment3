@@ -135,10 +135,24 @@ class Server():
 
 
         print('listening on', addr)
+
+    def _get_connection(self):
+        try:
+            return self.s.accept()
+        except OSError as e:
+            # Handle the case where no incoming connection is available
+            if not (e.args[0] == errno.EAGAIN or e.args[0] == errno.EWOULDBLOCK):
+                # Handle other OSError exceptions
+                print("Error accepting connection:", e)
+            return None
+
     
     async def _wait_and_process_request(self):
-        try:
-            cl, addr = self.s.accept()
+            connection_result = self._get_connection()
+            if connection_result is None:
+                return
+
+            cl, addr = connection_result
             print('client connected from', addr)
 
             cl_file = cl.makefile('rwb', 0)
@@ -153,13 +167,6 @@ class Server():
             response = self.html % ('\n'.join(rows), self.style)
             cl.send(response)
             cl.close()
-        except OSError as e:
-            # Handle the case where no incoming connection is available
-            if e.args[0] == errno.EAGAIN or e.args[0] == errno.EWOULDBLOCK:
-                await uasyncio.sleep(0.1)  # Wait briefly before trying again
-            else:
-                # Handle other OSError exceptions
-                print("Error accepting connection:", e)
 
     async def start(self):
         while True:

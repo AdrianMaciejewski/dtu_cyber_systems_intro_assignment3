@@ -11,7 +11,7 @@ from PinDefinitions import button_change_task
 from server import Server
 
 async def run_board():
-    tasks = [Task1(), Task2(), Task3(), Task4()]#, Task5()
+    tasks = [Task1(), Task2(), Task3(), Task4()]# , Task5()
     running_task_index = 0
     print("Starting with task 1")
 
@@ -31,17 +31,6 @@ async def run_board():
 
 async def run_server():
     await Server().start()
-
-
-async def task1():
-    while True:
-        print("Task 1 running")
-        await uasyncio.sleep(10)
-
-async def task2():
-    while True:
-        print("Task 2 running")
-        await uasyncio.sleep(2)
 
 async def run():
     loop = uasyncio.get_event_loop()

@@ -37,6 +37,6 @@ class Task4(Task3):
         print(f"Task4; Temperature: {temp}")
     
     def end_task(self):
-        rgb_led_red_pin.value(0)
-        rgb_led_green_pin.value(0)
-        rgb_led_blue_pin.value(0)
+        self.red_pwm.duty(0)
+        self.green_pwm.duty(0)
+        self.blue_pwm.duty(0)

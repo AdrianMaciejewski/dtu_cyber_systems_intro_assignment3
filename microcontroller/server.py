@@ -7,7 +7,97 @@ from PinDefinitions import button_led_pin, green_led_pin, orange_led_pin, red_le
 
 class Server():
     def __init__(self):
-        self.html = """
+        # Create wifi network
+        self.ap = network.WLAN (network.AP_IF)
+        self.ap.active (True)
+        self.ap.config (essid = 'ESP32-WIFI-NAME')
+        self.ap.config (authmode = 3, password = 'WiFi-password')
+        
+        addr = socket.getaddrinfo('0.0.0.0', 80)[0][-1]
+        self.s = socket.socket()
+        self.s.bind(addr)
+        self.s.listen(1)
+        # Set the server socket to be non-blocking
+        self.s.setblocking(False)
+
+
+        print('listening on', addr)
+
+
+        self.endpoints = {'/pins': self.GetPins}
+
+    def _get_connection(self):
+        try:
+            return self.s.accept()
+        except OSError as e:
+            # Handle the case where no incoming connection is available
+            if not (e.args[0] == errno.EAGAIN or e.args[0] == errno.EWOULDBLOCK):
+                # Handle other OSError exceptions
+                print("Error accepting connection:", e)
+            return None
+
+    
+    async def _wait_and_process_request(self):
+            connection_result = self._get_connection()
+            if connection_result is None:
+                return
+
+            cl, addr = connection_result
+            print('client connected from', addr)
+
+            request_type, request_path = self.get_request_info(cl)
+            print(request_path)
+            
+            endpoint_path, params = self.get_path_and_params_from_url(request_path)
+            print(endpoint_path)
+            print(params)
+            
+            response = "Not found"
+            if endpoint_path in self.endpoints:
+                response = self.endpoints[endpoint_path](**params)
+
+            # return template
+            cl.send(response)
+            cl.close()
+    
+    def get_request(self, cl):
+        cl_file = cl.makefile('rwb', 0)
+        request = ""
+        while True:
+            line = cl_file.readline()
+            request += line.decode("utf-8")
+            if not line or line == b'\r\n':
+                break
+        return request
+
+    async def start(self):
+        while True:
+            await self._wait_and_process_request()
+            await uasyncio.sleep_ms(1)
+
+    def get_request_info(self, cl):
+        request = self.get_request(cl)
+
+        request_info = request.splitlines()[0].split(' ')
+        request_type = request_info[0]
+        request_path = request_info[1]
+        return request_type, request_path
+
+    def get_path_and_params_from_url(self, path):
+        endpoint_path = path
+        query_pos = endpoint_path.find('?')
+        if query_pos != -1:
+            query_string = endpoint_path[query_pos + 1:]  # Extract query string
+            endpoint_path = endpoint_path[:query_pos]  # Extract path
+            params = dict(param.split('=') for param in query_string.split('&'))  # Parse query parameters
+        else:
+            params = {}
+            
+        return endpoint_path, params
+    
+
+    def GetPins(self, **params):
+        html = """
             <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -37,7 +127,7 @@ class Server():
         </html>
 
         """
-        self.style = """
+        style = """
         <style>
             * {
             box-sizing: border-box;
@@ -118,58 +208,7 @@ class Server():
             }
         </style>
         """
-        self.pins = {'Button led pin' : button_led_pin, 'Green led pin' : green_led_pin, 'Orange led pin' : orange_led_pin, 'Red led pin' : red_led_pin, 'RGB led red pin' : rgb_led_red_pin, 'RGB led green pin' : rgb_led_green_pin, 'RGB led blue pin' : rgb_led_blue_pin, 'SDA pin' : sda_pin, 'SCL pin' : scl_pin, 'Potentiometer pin' : potentiometer_pin, 'Button change task' : button_change_task}
-
-        # Create wifi network
-        self.ap = network.WLAN (network.AP_IF)
-        self.ap.active (True)
-        self.ap.config (essid = 'ESP32-WIFI-NAME')
-        self.ap.config (authmode = 3, password = 'WiFi-password')
-        
-        addr = socket.getaddrinfo('0.0.0.0', 80)[0][-1]
-        self.s = socket.socket()
-        self.s.bind(addr)
-        self.s.listen(1)
-        # Set the server socket to be non-blocking
-        self.s.setblocking(False)
-
-
-        print('listening on', addr)
-
-    def _get_connection(self):
-        try:
-            return self.s.accept()
-        except OSError as e:
-            # Handle the case where no incoming connection is available
-            if not (e.args[0] == errno.EAGAIN or e.args[0] == errno.EWOULDBLOCK):
-                # Handle other OSError exceptions
-                print("Error accepting connection:", e)
-            return None
-
-    
-    async def _wait_and_process_request(self):
-            connection_result = self._get_connection()
-            if connection_result is None:
-                return
-
-            cl, addr = connection_result
-            print('client connected from', addr)
-
-            cl_file = cl.makefile('rwb', 0)
-            while True:
-                line = cl_file.readline()
-                print(line)
-                if not line or line == b'\r\n':
-                    break
-
-            # return template
-            rows = ['<tr><td>%s</td><td>%d</td></tr>' % (name, pin.value()) for name, pin in self.pins.items()]
-            response = self.html % ('\n'.join(rows), self.style)
-            cl.send(response)
-            cl.close()
-
-    async def start(self):
-        while True:
-            await self._wait_and_process_request()
-            await uasyncio.sleep_ms(1)
-    
+        pins = {'Button led pin' : button_led_pin, 'Green led pin' : green_led_pin, 'Orange led pin' : orange_led_pin, 'Red led pin' : red_led_pin, 'RGB led red pin' : rgb_led_red_pin, 'RGB led green pin' : rgb_led_green_pin, 'RGB led blue pin' : rgb_led_blue_pin, 'SDA pin' : sda_pin, 'SCL pin' : scl_pin, 'Potentiometer pin' : potentiometer_pin, 'Button change task' : button_change_task}
+        rows = ['<tr><td>%s</td><td>%d</td></tr>' % (name, pin.value()) for name, pin in pins.items()]
+        response = html % ('\n'.join(rows), style)
+        return response

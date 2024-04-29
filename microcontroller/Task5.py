@@ -1,7 +1,7 @@
 from machine import ADC, PWM
 
 from Task import Task
-from PinDefinitions import potentiometer_pin, rgb_led_red_pin, rgb_led_green_pin, rgb_led_blue_pin
+from PinDefinitions import potentiometer_pin, rgb_led_red_pin, rgb_led_green_pin, rgb_led_blue_pin, red_pwm, green_pwm, blue_pwm
 
 
 class Task5(Task):
@@ -10,9 +10,9 @@ class Task5(Task):
         self.MAX_VOLTAGE = 1048*1000
         self.MAX_DUTY = 2**10-1
 
-        self.red_pwm = PWM(rgb_led_red_pin, duty=0)
-        self.green_pwm = PWM(rgb_led_green_pin, duty=0)
-        self.blue_pwm = PWM(rgb_led_blue_pin, duty=0)
+        self.red_pwm = red_pwm
+        self.green_pwm = green_pwm
+        self.blue_pwm = blue_pwm
 
         self.adc = ADC(potentiometer_pin)
 

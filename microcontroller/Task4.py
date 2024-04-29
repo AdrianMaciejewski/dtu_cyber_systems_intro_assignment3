@@ -1,6 +1,6 @@
 from machine import I2C, PWM
 
-from PinDefinitions import rgb_led_red_pin, rgb_led_green_pin, rgb_led_blue_pin, sda_pin, scl_pin
+from PinDefinitions import rgb_led_red_pin, rgb_led_green_pin, rgb_led_blue_pin, sda_pin, scl_pin, red_pwm, green_pwm, blue_pwm
 from Task3 import Task3, convert_to_celcius
 
 
@@ -9,9 +9,9 @@ class Task4(Task3):
         super().__init__()
         self.MAX_DUTY = 2**10-1
         
-        self.red_pwm = PWM(rgb_led_red_pin, duty=0)
-        self.green_pwm = PWM(rgb_led_green_pin, duty=0)
-        self.blue_pwm = PWM(rgb_led_blue_pin, duty=0)
+        self.red_pwm = red_pwm
+        self.green_pwm = green_pwm
+        self.blue_pwm = blue_pwm
 
     def run_iteration(self):
         data = bytearray(2)

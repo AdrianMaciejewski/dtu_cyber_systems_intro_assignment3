@@ -2,8 +2,10 @@ import machine
 import network
 import socket
 import uasyncio
+import json
 
-from PinDefinitions import button_led_pin, green_led_pin, orange_led_pin, red_led_pin, rgb_led_red_pin, rgb_led_green_pin, rgb_led_blue_pin, sda_pin, scl_pin, potentiometer_pin, button_change_task
+from PinDefinitions import button_led_pin, green_led_pin, orange_led_pin, red_led_pin, rgb_led_red_pin, rgb_led_green_pin, rgb_led_blue_pin, sda_pin, scl_pin, potentiometer_pin, button_change_task, red_pwm, green_pwm, blue_pwm, pins, i2c
+from Task3 import read_temperature
 
 class Server():
     def __init__(self):
@@ -24,7 +26,7 @@ class Server():
         print('listening on', addr)
 
 
-        self.endpoints = {'/pins': self.GetPins}
+        self.endpoints = {'/': self.GetPinsView, '/pins': self.GetPins, '/sensors': self.GetSensors}
 
     def _get_connection(self):
         try:
@@ -96,7 +98,7 @@ class Server():
         return endpoint_path, params
     
 
-    def GetPins(self, **params):
+    def GetPinsView(self, **params):
         html = """
             <!DOCTYPE html>
         <html lang="en">
@@ -212,3 +214,22 @@ class Server():
         rows = ['<tr><td>%s</td><td>%d</td></tr>' % (name, pin.value()) for name, pin in pins.items()]
         response = html % ('\n'.join(rows), style)
         return response
+
+        
+
+    def GetPins(self, **params):
+        response = []
+        for pin in pins:
+            response.append({'id': pin['id'], 'name': pin['name'], 'type': pin['type'], 'pin_value': pin['pin'].value(), 'pwm_duty': pin['pwm'].duty() if pin['pwm'] is not None else None})
+        
+        if 'id' in params:
+            response = [pin for pin in response if int(pin['id']) == int(params['id'])]
+        return json.dumps(response)
+    
+
+    def GetSensors(self, **params):
+        response = [{'id': '1', "name": "Temperature sensor", "value": f"{read_temperature(i2c)}"}]
+        
+        if 'id' in params:
+            response = [sensor for sensor in response if int(sensor['id']) == int(params['id'])]
+        return json.dumps(response)

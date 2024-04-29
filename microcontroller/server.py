@@ -26,7 +26,7 @@ class Server():
         print('listening on', addr)
 
 
-        self.endpoints = {'/': self.GetPinsView, '/pins': self.GetPins, '/sensors': self.GetSensors}
+        self.endpoints = {'/': {'get': self.GetPinsView}, '/pins': {'get': self.GetPins}, '/sensors': {'get': self.GetSensors}}
 
     def _get_connection(self):
         try:
@@ -47,29 +47,19 @@ class Server():
             cl, addr = connection_result
             print('client connected from', addr)
 
-            request_type, request_path = self.get_request_info(cl)
-            print(request_path)
+            request_type, endpoint_path, params, data = self.get_request_info(cl)
             
-            endpoint_path, params = self.get_path_and_params_from_url(request_path)
-            print(endpoint_path)
-            print(params)
-            
-            response = "Not found"
-            if endpoint_path in self.endpoints:
-                response = self.endpoints[endpoint_path](**params)
+            response = "HTTP/1.1 404 Not found \r\n" + "Content-Type: text/html\r\n" +"\r\n"
+            if endpoint_path.lower() in self.endpoints and request_type.lower() in self.endpoints[endpoint_path]:
+                response = self.endpoints[endpoint_path.lower()][request_type.lower()](data, **params)
 
             # return template
             cl.send(response)
             cl.close()
     
     def get_request(self, cl):
-        cl_file = cl.makefile('rwb', 0)
-        request = ""
-        while True:
-            line = cl_file.readline()
-            request += line.decode("utf-8")
-            if not line or line == b'\r\n':
-                break
+        request = cl.recv(10000).decode("utf-8")
+        print(request)
         return request
 
     async def start(self):
@@ -83,7 +73,16 @@ class Server():
         request_info = request.splitlines()[0].split(' ')
         request_type = request_info[0]
         request_path = request_info[1]
-        return request_type, request_path
+        
+        key_value_pairs = request[request.find('\r\n\r\n') + 4:].split('&')
+        data = {}
+        for pair in key_value_pairs:
+            key, value = pair.split('=')
+            data[key] = value
+        
+        endpoint_path, params = self.get_path_and_params_from_url(request_path)
+            
+        return request_type, endpoint_path, params, data
 
     def get_path_and_params_from_url(self, path):
         endpoint_path = path
@@ -98,7 +97,7 @@ class Server():
         return endpoint_path, params
     
 
-    def GetPinsView(self, **params):
+    def GetPinsView(self, data={}, **params):
         html = """
             <!DOCTYPE html>
         <html lang="en">
@@ -213,23 +212,29 @@ class Server():
         pins = {'Button led pin' : button_led_pin, 'Green led pin' : green_led_pin, 'Orange led pin' : orange_led_pin, 'Red led pin' : red_led_pin, 'RGB led red pin' : rgb_led_red_pin, 'RGB led green pin' : rgb_led_green_pin, 'RGB led blue pin' : rgb_led_blue_pin, 'SDA pin' : sda_pin, 'SCL pin' : scl_pin, 'Potentiometer pin' : potentiometer_pin, 'Button change task' : button_change_task}
         rows = ['<tr><td>%s</td><td>%d</td></tr>' % (name, pin.value()) for name, pin in pins.items()]
         response = html % ('\n'.join(rows), style)
+        
+        response = "HTTP/1.1 200 \r\n" + "Content-Type: text/html\r\n" +"\r\n" + response
         return response
 
         
 
-    def GetPins(self, **params):
+    def GetPins(self, data={}, **params):
         response = []
         for pin in pins:
             response.append({'id': pin['id'], 'name': pin['name'], 'type': pin['type'], 'pin_value': pin['pin'].value(), 'pwm_duty': pin['pwm'].duty() if pin['pwm'] is not None else None})
         
         if 'id' in params:
             response = [pin for pin in response if int(pin['id']) == int(params['id'])]
-        return json.dumps(response)
+        
+        response = "HTTP/1.1 200 \r\n" + "Content-Type: application/json\r\n" +"\r\n" + json.dumps(response)
+        return response
     
 
-    def GetSensors(self, **params):
+    def GetSensors(self, data={}, **params):
         response = [{'id': '1', "name": "Temperature sensor", "value": f"{read_temperature(i2c)}"}]
         
         if 'id' in params:
             response = [sensor for sensor in response if int(sensor['id']) == int(params['id'])]
-        return json.dumps(response)
+        
+        response = "HTTP/1.1 200 \r\n" + "Content-Type: application/json\r\n" +"\r\n" + json.dumps(response)
+        return response

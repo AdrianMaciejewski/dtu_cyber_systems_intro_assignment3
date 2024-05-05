@@ -8,10 +8,10 @@ from Task5 import Task5
 
 from PinDefinitions import button_change_task
 
-from server import Server
+from server.Server import Server
 
 async def run_board():
-    tasks = [Task1(), Task2(), Task3(), Task4()]# , Task5()
+    tasks = [Task1(), Task2(), Task3(), Task4(), Task5()]
     running_task_index = 0
     print("Starting with task 1")
 

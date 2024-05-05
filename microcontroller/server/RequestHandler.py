@@ -200,8 +200,9 @@ class RequestHandler:
     
 
     def _handleGetSensors(self, **params):
-        response = [{'id': '1', "name": "Temperature sensor", "value": f"{read_temperature()}"}]
-        response = [{'id': '10', "name": "Potentiometer", "value": f"{get_potentiometer_load()}"}]
+        response = [
+            {'id': '12', "name": "Temperature sensor", "value": f"{read_temperature()}"}, 
+            {'id': '11', "name": "Potentiometer", "value": f"{get_potentiometer_load()}"}]
         
         if 'id' in params:
             response = [sensor for sensor in response if int(sensor['id']) == int(params['id'])]

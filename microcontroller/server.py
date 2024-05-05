@@ -26,7 +26,7 @@ class Server():
         print('listening on', addr)
 
 
-        self.endpoints = {'/': {'get': self.GetPinsView}, '/pins': {'get': self.GetPins}, '/sensors': {'get': self.GetSensors}}
+        self.endpoints = {'/': {'get': self.GetPinsView}, '/pins': {'get': self.GetPins}, '/sensors': {'get': self.GetSensors}, '/edit': {'get': self.HandleEdit}}
 
     def _get_connection(self):
         try:
@@ -50,8 +50,13 @@ class Server():
             request_type, endpoint_path, params, data = self.get_request_info(cl)
             
             response = "HTTP/1.1 404 Not found \r\n" + "Content-Type: text/html\r\n" +"\r\n"
-            if endpoint_path.lower() in self.endpoints and request_type.lower() in self.endpoints[endpoint_path]:
-                response = self.endpoints[endpoint_path.lower()][request_type.lower()](data, **params)
+            if endpoint_path.lower() in self.endpoints:
+                if request_type.lower() in self.endpoints[endpoint_path]:
+                    response = self.endpoints[endpoint_path.lower()][request_type.lower()](data, **params)
+            elif endpoint_path.lower().startswith('/edit'):
+                if request_type.lower() in self.endpoints[endpoint_path]:
+                    response = self.endpoints['/edit'][request_type.lower()](data, **params)
+            
 
             # return template
             cl.send(response)
@@ -237,4 +242,10 @@ class Server():
             response = [sensor for sensor in response if int(sensor['id']) == int(params['id'])]
         
         response = "HTTP/1.1 200 \r\n" + "Content-Type: application/json\r\n" +"\r\n" + json.dumps(response)
+        return response
+    
+    def HandleEdit(self, data={}, **params):
+        response = "edit"
+        print(data)
+        print(params)
         return response

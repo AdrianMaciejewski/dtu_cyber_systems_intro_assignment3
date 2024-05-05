@@ -47,23 +47,29 @@ class Server():
             cl, addr = connection_result
             print('client connected from', addr)
 
-            request_type, endpoint_path, params, data = self.get_request_info(cl)
+            request_type, endpoint_path, params = self.get_request_info(cl)
             
             response = "HTTP/1.1 404 Not found \r\n" + "Content-Type: text/html\r\n" +"\r\n"
             if endpoint_path.lower() in self.endpoints:
                 if request_type.lower() in self.endpoints[endpoint_path]:
-                    response = self.endpoints[endpoint_path.lower()][request_type.lower()](data, **params)
+                    response = self.endpoints[endpoint_path.lower()][request_type.lower()](**params)
             elif endpoint_path.lower().startswith('/edit'):
                 if request_type.lower() in self.endpoints[endpoint_path]:
-                    response = self.endpoints['/edit'][request_type.lower()](data, **params)
+                    response = self.endpoints['/edit'][request_type.lower()](**params)
             
-
             # return template
             cl.send(response)
             cl.close()
     
+    
     def get_request(self, cl):
-        request = cl.recv(10000).decode("utf-8")
+        cl_file = cl.makefile('rwb', 0)
+        request = ""
+        while True:
+            line = cl_file.readline()
+            request += line.decode("utf-8")
+            if not line or line == b'\r\n':
+                break
         print(request)
         return request
 
@@ -79,15 +85,9 @@ class Server():
         request_type = request_info[0]
         request_path = request_info[1]
         
-        key_value_pairs = request[request.find('\r\n\r\n') + 4:].split('&')
-        data = {}
-        for pair in key_value_pairs:
-            key, value = pair.split('=')
-            data[key] = value
-        
         endpoint_path, params = self.get_path_and_params_from_url(request_path)
             
-        return request_type, endpoint_path, params, data
+        return request_type, endpoint_path, params
 
     def get_path_and_params_from_url(self, path):
         endpoint_path = path
@@ -102,7 +102,7 @@ class Server():
         return endpoint_path, params
     
 
-    def GetPinsView(self, data={}, **params):
+    def GetPinsView(self, **params):
         html = """
             <!DOCTYPE html>
         <html lang="en">
@@ -223,7 +223,7 @@ class Server():
 
         
 
-    def GetPins(self, data={}, **params):
+    def GetPins(self, **params):
         response = []
         for pin in pins:
             response.append({'id': pin['id'], 'name': pin['name'], 'type': pin['type'], 'pin_value': pin['pin'].value(), 'pwm_duty': pin['pwm'].duty() if pin['pwm'] is not None else None})
@@ -235,7 +235,7 @@ class Server():
         return response
     
 
-    def GetSensors(self, data={}, **params):
+    def GetSensors(self, **params):
         response = [{'id': '1', "name": "Temperature sensor", "value": f"{read_temperature(i2c)}"}]
         
         if 'id' in params:
@@ -244,8 +244,31 @@ class Server():
         response = "HTTP/1.1 200 \r\n" + "Content-Type: application/json\r\n" +"\r\n" + json.dumps(response)
         return response
     
-    def HandleEdit(self, data={}, **params):
-        response = "edit"
-        print(data)
-        print(params)
-        return response
+    def HandleEdit(self, **params):
+        chosen_pin = None
+        if 'pinId' in params:
+            for pin in pins:
+                if int(pin['id']) == int(params['pinId']):
+                    chosen_pin = pin
+                    break
+        if chosen_pin is None:
+            return "HTTP/1.1 404 \r\n" + "Content-Type: application/json\r\n" +"\r\n" + json.dumps({'status': 'pin id not found'})
+        
+        
+        # binary value pins
+        if 'isOn' in params:
+            is_on = params['isOn'].lower() == 'true'
+            chosen_pin['pin'].value(is_on)
+            
+            return "HTTP/1.1 200 \r\n" + "Content-Type: application/json\r\n" +"\r\n" + json.dumps({'status': 'ok'})
+        
+        # pwm
+        if 'pwmDutyLoad' in params:
+            pwm_duty_load = float(params['pwmDutyLoad'])
+            if pwm_duty_load < 0 or pwm_duty_load > 1:
+                return "HTTP/1.1 400 \r\n" + "Content-Type: application/json\r\n" +"\r\n" + json.dumps({'status': 'pwm duty load must be between 0 and 1'})
+            chosen_pin['pwm'].duty(int(pwm_duty_load * 1023))
+            
+            return "HTTP/1.1 200 \r\n" + "Content-Type: application/json\r\n" +"\r\n" + json.dumps({'status': 'ok'})
+            
+        return  "HTTP/1.1 404 \r\n" + "Content-Type: application/json\r\n" +"\r\n" + json.dumps({'status': 'could not recognize the edit'})

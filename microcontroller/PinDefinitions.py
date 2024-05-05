@@ -34,6 +34,13 @@ A4=36
 button_change_task = Pin(A4, Pin.IN)
 
 
+"""
+type:
+1 - pin only
+2 - pwm
+3 - adc
+4 - I2C
+"""
 pins = [
             {'id': 1, 'pinNumber': IO13, 'isReadOnly': True, 'name': 'Button led pin', 'type': 1, 'pin': button_led_pin, 'pwm': None, 'adc': None},
             {'id': 2, 'pinNumber': IO12, 'isReadOnly': False, 'name': 'Green led pin', 'type': 1, 'pin': green_led_pin, 'pwm': None, 'adc': None},
@@ -44,6 +51,7 @@ pins = [
             {'id': 7, 'pinNumber': IO14, 'isReadOnly': False, 'name': 'RGB led blue pin', 'type': 2, 'pin': rgb_led_blue_pin, 'pwm': blue_pwm, 'adc': None},
             {'id': 8, 'pinNumber': SDA, 'isReadOnly': True, 'name': 'SDA pin', 'type': 1, 'pin': sda_pin, 'pwm': None, 'adc': None},
             {'id': 9, 'pinNumber': SCL, 'isReadOnly': True, 'name': 'SCL pin', 'type': 1, 'pin': scl_pin, 'pwm': None, 'adc': None},
-            {'id': 10, 'pinNumber': A3, 'isReadOnly': True, 'name': 'Potentiometer pin', 'type': 3, 'pin': potentiometer_pin, 'pwm': None, 'adc': potentiometer_adc},
-            {'id': 11, 'pinNumber': A4, 'isReadOnly': True, 'name': 'Button change task', 'type': 1, 'pin': button_change_task, 'pwm': None, 'adc': None},
+            {'id': 10, 'pinNumber': A4, 'isReadOnly': True, 'name': 'Button change task', 'type': 1, 'pin': button_change_task, 'pwm': None, 'adc': None},
+            {'id': 11, 'pinNumber': A3, 'isReadOnly': True, 'name': 'Potentiometer pin', 'type': 3, 'pin': potentiometer_pin, 'pwm': None, 'adc': potentiometer_adc},
+            {'id': 12, 'pinNumber': SDA, 'isReadOnly': True, 'name': 'Temperature sensor', 'type': 4, 'pin': sda_pin, 'pwm': None, 'adc': None},
         ]

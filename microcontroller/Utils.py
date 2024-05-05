@@ -23,4 +23,8 @@ def read_temperature():
     data = bytearray(2)
     i2c.readfrom_mem_into(24,5,data)
     temp = _convert_to_celcius(data)
-    return temp
+    return round(temp, 1)
+
+
+def getPinValue(pin):
+    return pin['pin'].value() if pin['type'] == 1 else round(pin['pwm'].duty()/float(MAX_DUTY), 2) if pin['type'] == 2 else get_potentiometer_load() if pin['type'] == 3 and pin['id'] else read_temperature() if pin['type'] == 4 and pin['id'] else 0

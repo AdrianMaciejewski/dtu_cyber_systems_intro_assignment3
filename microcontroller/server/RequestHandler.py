@@ -5,7 +5,7 @@ import uasyncio
 import json
 
 from PinDefinitions import button_led_pin, green_led_pin, orange_led_pin, red_led_pin, rgb_led_red_pin, rgb_led_green_pin, rgb_led_blue_pin, sda_pin, scl_pin, potentiometer_pin, button_change_task, red_pwm, green_pwm, blue_pwm, pins, i2c
-from Utils import get_potentiometer_load, read_temperature, MAX_DUTY
+from Utils import get_potentiometer_load, read_temperature, MAX_DUTY, getPinValue
 
 
 """
@@ -63,6 +63,29 @@ class RequestHandler:
         %s
         </html>
 
+        """
+        update_script = """
+        <script>
+            async function updateValues() {
+            try {
+                const response = await fetch("http://192.168.4.1/pins");
+                const data = await response.json();
+                data.forEach((pin) => {
+                const valueCell = document.getElementById(
+                    `${pin.id.toString()}-value`
+                );
+                if (valueCell) {
+                    if (valueCell) valueCell.textContent = pin.value;
+                }
+                });
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+            }
+
+            // Schedule the function to fire every second
+            setInterval(updateValues, 1000);
+        </script>
         """
         style = """
         <style>
@@ -147,24 +170,27 @@ class RequestHandler:
         """
         
         rows = ["""<tr id='%d'>
-                <td>%s</td>
-                <td>%s</td>
-                <td>%s</td>
+                <td id='%d-name'>%s</td>
+                <td id='%d-type'>%s</td>
+                <td id='%d-value'>%s</td>
                 </tr>""" % (
                     pin['id'],
-                    pin['name'], 
+                    pin['id'],
+                    pin['name'],
+                    pin['id'], 
                     'on/off' if pin['type']==1 else 'range',
-                    pin['pin'].value() if pin['type'] == 1 else round(pin['pwm'].duty()/float(MAX_DUTY), 2) if pin['type'] == 2 else get_potentiometer_load() if pin['type'] == 3 and pin['id'] else 0)
+                    pin['id'],
+                    getPinValue(pin))
                 for pin in pins]
-        response = html % ('\n'.join(rows), style)
-        
+        response = html % ('\n'.join(rows), update_script + style)
+        print(response)
         response = "HTTP/1.1 200 Ok \r\n" + "Content-Type: text/html\r\n" +"\r\n" + response
         return response
 
     def _handleGetPins(self, **params):
         response = []
         for pin in pins:
-            response.append({'id': pin['id'], 'pinNumber': pin['pinNumber'], 'isReadOnly': pin['isReadOnly'], 'name': pin['name'], 'type': pin['type'], 'pin_value': pin['pin'].value(), 'pwm_duty': pin['pwm'].duty() if pin['pwm'] is not None else None})
+            response.append({'id': pin['id'], 'pinNumber': pin['pinNumber'], 'isReadOnly': pin['isReadOnly'], 'name': pin['name'], 'type': pin['type'], 'value': getPinValue(pin)})
         
         if 'id' in params:
             response = [pin for pin in response if int(pin['id']) == int(params['id'])]

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body>
+    <div class="body-container">
+      <h1>ESP32 Pins</h1>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr class="table100-head">
+              <th>Pin</th>
+              <th>Type</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr id="1">
+              <td id="1-name">Button led pin</td>
+              <td id="1-type">on/off</td>
+              <td id="1-value">0</td>
+            </tr>
+            <tr id="2">
+              <td id="2-name">Green led pin</td>
+              <td id="2-type">on/off</td>
+              <td id="2-value">0</td>
+            </tr>
+            <tr id="3">
+              <td id="3-name">Orange led pin</td>
+              <td id="3-type">on/off</td>
+              <td id="3-value">0</td>
+            </tr>
+            <tr id="4">
+              <td id="4-name">Red led pin</td>
+              <td id="4-type">on/off</td>
+              <td id="4-value">0</td>
+            </tr>
+            <tr id="5">
+              <td id="5-name">RGB led red pin</td>
+              <td id="5-type">range</td>
+              <td id="5-value">0.0</td>
+            </tr>
+            <tr id="6">
+              <td id="6-name">RGB led green pin</td>
+              <td id="6-type">range</td>
+              <td id="6-value">0.0</td>
+            </tr>
+            <tr id="7">
+              <td id="7-name">RGB led blue pin</td>
+              <td id="7-type">range</td>
+              <td id="7-value">0.0</td>
+            </tr>
+            <tr id="8">
+              <td id="8-name">SDA pin</td>
+              <td id="8-type">on/off</td>
+              <td id="8-value">1</td>
+            </tr>
+            <tr id="9">
+              <td id="9-name">SCL pin</td>
+              <td id="9-type">on/off</td>
+              <td id="9-value">1</td>
+            </tr>
+            <tr id="10">
+              <td id="10-name">Potentiometer pin</td>
+              <td id="10-type">range</td>
+              <td id="10-value">0.0</td>
+            </tr>
+            <tr id="11">
+              <td id="11-name">Button change task</td>
+              <td id="11-type">on/off</td>
+              <td id="11-value">0</td>
+            </tr>
+            <tr id="12">
+              <td id="12-name">remperature sensor</td>
+              <td id="12-type">range</td>
+              <td id="12-value">26.6</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+
+  <script>
+    async function updateValues() {
+      try {
+        const response = await fetch("http://192.168.4.1/pins");
+        const data = await response.json();
+        data.forEach((pin) => {
+          const valueCell = document.getElementById(
+            `${pin.id.toString()}-value`
+          );
+          if (valueCell) {
+            if (valueCell) valueCell.textContent = pin.value;
+          }
+        });
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    }
+
+    // Schedule the function to fire every second
+    setInterval(updateValues, 1000);
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      padding: 0px;
+      margin: 0px;
+    }
+    html {
+      height: 100%;
+      width: 100%;
+    }
+    body {
+      display: flex;
+      justify-content: center;
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(45deg, #4158d0, #c850c0);
+    }
+    h1 {
+      height: 4rem;
+      line-height: 4rem;
+      text-align: center;
+      color: #eee;
+    }
+    table {
+      border: solid 0px black;
+      border-radius: 1rem;
+      overflow: hidden;
+      border-spacing: 0;
+    }
+    thead {
+      background: #36304a;
+    }
+    tbody {
+      background: #e0e0e0;
+    }
+    th {
+      padding: 0rem 2rem;
+      text-align: left;
+      font-family: OpenSans-Regular;
+      font-size: 18px;
+      color: #fff;
+      line-height: 1.2;
+      font-weight: unset;
+    }
+    th:first-child {
+      padding: 0rem 1rem;
+    }
+    th:last-child {
+      padding: 0rem 1rem;
+    }
+    tr {
+      border: 0;
+      height: 50px;
+      padding: 1rem 0rem;
+      display: table-row;
+      vertical-align: inherit;
+      unicode-bidi: isolate;
+      border-color: inherit;
+    }
+    td {
+      border: solid 0px black;
+      padding: 0rem 2rem;
+    }
+    td:first-child {
+      padding: 0rem 1rem;
+    }
+    th:last-child {
+      padding: 0rem 1rem;
+    }
+    .body-container {
+      height: 100%;
+      width: 100%;
+    }
+    .table-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</html>
